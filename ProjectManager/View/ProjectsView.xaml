@@ -1,0 +1,173 @@
+﻿<UserControl x:Class="ProjectManager.View.ProjectsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ProjectManager.View"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800"
+             xmlns:ui="http://schemas.modernwpf.com/2019"
+             xmlns:vm="clr-namespace:ProjectManager.ViewModel"
+             d:DataContext="{d:DesignInstance Type=vm:ProjectsViewViewModel}"
+             xmlns:c="clr-namespace:ProjectManager.Converter">
+    <UserControl.DataContext>
+        <vm:ProjectsViewViewModel/>
+    </UserControl.DataContext>
+    <UserControl.Resources>
+        <c:PriorityToColorConverter x:Key="PriorityToColorConverter"/>
+        <Style TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource SystemControlBackgroundBaseMediumLowBrush}" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Margin" Value="2" />
+        </Style>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="2*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.RowSpan="2">
+            <ui:SimpleStackPanel >
+                <ui:CommandBar Grid.Row="0" Grid.Column="0">
+                    <ui:AppBarButton Icon="Add" Command="{Binding CreateProjectCommand}" Label="Neu"/>
+                    <ui:AppBarButton Icon="Filter" Command="{Binding FilterProjectsCommand}" Label="Projekte Filtern"/>
+                </ui:CommandBar>
+
+                <ui:ListView ItemsSource="{Binding Projects}"
+                             d:ItemsSource="{d:SampleData ItemCount=2}"
+                             SelectedItem="{Binding SelectedProject}"
+                             SelectedIndex="{Binding SelectedProjectIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Name="l_projects"
+                             VerticalAlignment="Stretch">
+                    <ui:ListView.ItemTemplate>
+                        <DataTemplate>
+                            <ui:SimpleStackPanel Margin="0 7" Spacing="2">
+                                <TextBlock Text="{Binding Title}" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding Responsibility.Fullname}" FontSize="13"/>
+                            </ui:SimpleStackPanel>
+                        </DataTemplate>
+                    </ui:ListView.ItemTemplate>
+                </ui:ListView>
+            </ui:SimpleStackPanel>
+        </Border>
+
+        <Border Grid.Row="0" Grid.Column="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="2*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="5*" />
+                    <RowDefinition Height="2*" />
+                </Grid.RowDefinitions>
+                <ui:CommandBar Grid.ColumnSpan="2">
+                    <ui:AppBarButton Icon="Edit" Command="{Binding EditProjectCommand}" Label="Bearbeiten"/>
+                    <ui:AppBarButton Icon="Delete" Command="{Binding DeleteProjectCommand}" Label="Löschen"/>
+                </ui:CommandBar>
+                <ui:SimpleStackPanel Grid.Row="1">
+                    <Label Content="{Binding SelectedProject.Title}" FontSize="24"/>
+                    <TextBlock>
+                        <Run Text="Beginn:"/>
+                        <Run Text="{Binding SelectedProject.Start, StringFormat='{}{0:dd.MM.yyyy}'}"/>
+                        <LineBreak/>
+                        <Run Text="Verantwortlich:"/>
+                        <Run Text="{Binding SelectedProject.Responsibility.Fullname, Mode=OneWay}"/>
+                    </TextBlock>
+                </ui:SimpleStackPanel>
+
+                <ui:SimpleStackPanel Grid.Column="1" Grid.Row="1">
+                    <TextBlock Text="Beschreibung" Style="{StaticResource TitleTextBlockStyle}"/>
+                    <TextBlock Text="{Binding SelectedProject.Description}"
+                               TextWrapping="WrapWithOverflow"/>
+                </ui:SimpleStackPanel>
+                
+                <ui:SimpleStackPanel Grid.Row="2" Grid.ColumnSpan="2">
+                    <TextBlock Text="Fortschritt" Style="{StaticResource TitleTextBlockStyle}"/>
+                    <TextBlock>
+                        <Run Text="{Binding SelectedProject.Progress, Mode=OneWay}"/>
+                        <Run Text="%"/>
+                    </TextBlock>
+                    <ui:ProgressBar Value="{Binding SelectedProject.Progress, Mode=OneWay}" />
+                </ui:SimpleStackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="1">
+            <TabControl TabStripPlacement="Top">
+                <TabItem Header="Aufgaben">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="1*" />
+                        </Grid.RowDefinitions>
+                        <ui:CommandBar>
+                            <ui:AppBarButton Icon="Add" Command="{Binding CreateAssignmentCommand}"/>
+                            <ui:AppBarButton Icon="Edit" Command="{Binding EditAssignmentCommand}"/>
+                            <ui:AppBarButton Icon="Delete" Command="{Binding DeleteAssignmentCommand}"/>
+                            <ui:AppBarButton Icon="Sort"/>
+                        </ui:CommandBar>
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding SelectedProject.Assignments}"
+                                  SelectedItem="{Binding SelectedAssignment}"
+                                  RowDetailsVisibilityMode="VisibleWhenSelected"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  SelectionMode="Single"
+                                  GridLinesVisibility="Horizontal"
+                                  
+                                  HeadersVisibility="Column">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn
+                                    Header="Titel"
+                                    Binding="{Binding Title}"/>
+                                <DataGridTextColumn
+                                    Header="Person"
+                                    Binding="{Binding User.Fullname}"/>
+                                <DataGridTemplateColumn Header="Priorität">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Width="10" Height="10" CornerRadius="5" Background="{Binding Priority, Converter={StaticResource PriorityToColorConverter}}" Margin="0,0,5,0"/>
+                                                <TextBlock Text="{Binding Priority}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ui:ProgressBar Value="{Binding ProgressPercent}" Maximum="100"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                            <DataGrid.RowDetailsTemplate>
+                                <DataTemplate>
+                                    <Label Content="{Binding AssignDate}"/>
+                                </DataTemplate>
+                            </DataGrid.RowDetailsTemplate>
+
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Kommentare">
+
+                </TabItem>
+                <TabItem Header="Änderungsprotokoll">
+
+                </TabItem>
+            </TabControl>
+        </Border>
+    </Grid>
+</UserControl>
