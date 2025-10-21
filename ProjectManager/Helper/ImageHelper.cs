@@ -15,21 +15,23 @@ namespace ProjectManager.Helper
         public static ImageSource ConvertToImageSource(byte[] imageBytes)
         {
             if (imageBytes == null || imageBytes.Length == 0)
-                return null;
+                return null!;
 
             using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                return BitmapFrame.Create(ms, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                var image = BitmapFrame.Create(ms, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                image.Freeze();
+                return image;
             }
         }
         public static byte[] ImageSourceToBinary(ImageSource imageSource)
         {
             if (imageSource == null)
-                return null;
+                return null!;
 
-            BitmapSource bitmapSource = imageSource as BitmapSource;
+            BitmapSource? bitmapSource = imageSource as BitmapSource;
             if (bitmapSource == null)
-                return null;
+                return null!;
             try
             {
                 using (MemoryStream ms = new MemoryStream())
@@ -40,10 +42,10 @@ namespace ProjectManager.Helper
                     return ms.ToArray();
                 }
             }
-            catch(Exception e)
+            catch(Exception ex)
             {
-                MessageBox.Show("ImageToBinary", "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
-                return null;
+                MessageBox.Show("ImageToBinary", "Fehler: " + ex.Message, MessageBoxButton.OK, MessageBoxImage.Error);
+                return null!;
             }
         }
 

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ProjectManager.DataProvider;
+using ProjectManager.Model;
 using System.Configuration;
 using System.Data;
 using System.Windows;
@@ -15,7 +16,7 @@ namespace ProjectManager
     {
         public static string DBConnectionString
         {
-            get => @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\josua\ProjectManger.mdf;Integrated Security=True;Connect Timeout=60;Max Pool Size=200;";
+            get => @"Server=localhost\SQLEXPRESS;Database=ProjectManager;Trusted_Connection=True;TrustServerCertificate=True;";
         }
         public static IHost AppHost { get; private set; }
 
@@ -41,9 +42,46 @@ namespace ProjectManager
         protected override async void OnStartup(StartupEventArgs e)
         {
             await AppHost.StartAsync();
+            using var scope = App.AppHost.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ProjectManagerContext>();
 
-            var mainWindow = AppHost.Services.GetRequiredService<MainWindow>();
-            mainWindow.Show();
+            // Erstellt die Datenbank, falls sie nicht existiert
+            context.Database.EnsureCreated();
+
+            var dataProvider = scope.ServiceProvider.GetRequiredService<IDataProvider>();
+            var config = scope.ServiceProvider.GetRequiredService<AppConfiguration>();
+            var notifier = scope.ServiceProvider.GetRequiredService<ISendNotification>();
+
+            ObjectRepository.Initialize(dataProvider, config, notifier);
+
+            // Default-Benutzer anlegen
+            if (!ObjectRepository.DataProvider.GetUsers().Result.Any())
+            {
+                await ObjectRepository.DataProvider.CreateUser(new User("admin", "admin123")
+                {
+                    Firstname = "System",
+                    Lastname = "Administrator",
+                    Email = "admin@localhost",
+                    IsAdmin = true
+                });
+            }
+
+
+            // LoginWindow anzeigen
+            var loginWindow = new LoginWindow(); // Optional: über DI holen, falls du Services brauchst
+            var loginResult = loginWindow.ShowDialog(); // Modal anzeigen
+
+            // Prüfen, ob Login erfolgreich war
+            if (ObjectRepository.DataProvider.CurrentUser != null)
+            {
+                var mainWindow = AppHost.Services.GetRequiredService<MainWindow>();
+                mainWindow.Show();
+            }
+            else
+            {
+                MessageBox.Show("Kein Benutzer angemeldet. Die Anwendung wird beendet.", "Anmeldung fehlgeschlagen", MessageBoxButton.OK, MessageBoxImage.Information);
+                Shutdown();
+            }
 
             base.OnStartup(e);
         }

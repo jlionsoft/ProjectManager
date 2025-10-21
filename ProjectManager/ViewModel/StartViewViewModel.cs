@@ -19,11 +19,11 @@ namespace ProjectManager.ViewModel
         }
         public bool CanCurrentUser
         {
-            get => ObjectRepository.DataProvider.CurrentUser.IsAdmin;
+            get => ObjectRepository.DataProvider!.CurrentUser!.IsAdmin;
         }
         public User User
         {
-            get => ObjectRepository.DataProvider.CurrentUser;
+            get => ObjectRepository.DataProvider!.CurrentUser!;
         }
         public int AssCOunt
         {
